@@ -19,7 +19,6 @@
             --bg-light-grey: #f8fafc;
             --bg-grid-color: #f8fafc;
             
-            /* Mức độ ưu tiên phong cách mềm mại */
             --muc-cao-bg: #fff5f5;
             --muc-cao-text: #dc2626;
             --muc-trungbinh-bg: #fffbeb;  
@@ -141,7 +140,6 @@
             gap: 8px;
         }
 
-        /* Các nút bấm icon tròn */
         .btn-action-circle {
             width: 40px;
             height: 40px;
@@ -163,8 +161,6 @@
         .btn-archive-top { font-size: 18px; }
         .btn-add-top { font-size: 24px; color: var(--primary); font-weight: bold; }
         .btn-theme-toggle { font-size: 18px; }
-
-        /* Nút thông báo mới */
         .btn-noti-status { font-size: 18px; color: #ef4444; }
         .btn-noti-status.active { color: #10b981; }
 
@@ -205,7 +201,7 @@
         .event-text { flex: 1; font-size: 15px; font-weight: 500; line-height: 1.4; outline: none; color: var(--text-main); }
         .event-text strong { font-weight: 700; margin-right: 4px; }
 
-        /* Các Tag nhỏ xinh phân loại */
+        /* Các Tag phân loại */
         .badge-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-left: 6px; background: var(--bg-light-grey); color: var(--text-muted); }
         .badge-tag.fixed { background: var(--primary-light); color: var(--primary); }
 
@@ -219,6 +215,7 @@
         .btn-back { background: none; border: none; color: var(--primary); font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px; font-weight: 600; text-align: left; }
         .time-row { display: flex; align-items: center; padding: 14px 12px; background: var(--bg-light-grey); border-radius: 14px; margin-bottom: 8px; border: 1px solid var(--border-color); }
         
+        .time-row.has-event { background-color: var(--bg-light-grey); }
         .time-row.level-cao { background-color: var(--muc-cao-bg); border-color: var(--muc-cao-text); color: var(--muc-cao-text); }
         .time-row.level-trungBinh { background-color: var(--muc-trungbinh-bg); border-color: var(--muc-trungbinh-text); color: var(--muc-trungbinh-text); }
         .time-row.level-thap { background-color: var(--muc-thap-bg); border-color: var(--muc-thap-text); color: var(--muc-thap-text); }
@@ -232,6 +229,11 @@
         .modal-content label { font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .modal-content input[type="text"], .modal-content input[type="number"], .modal-content select { width: 100%; margin-bottom: 16px; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 14px; background: var(--bg-light-grey); color: var(--text-main); }
+        
+        /* Layout chọn giờ và phút nằm song song */
+        .time-picker-group { display: flex; gap: 12px; margin-bottom: 16px; }
+        .time-picker-group select { margin-bottom: 0; }
+
         .setup-group { background: var(--bg-light-grey); padding: 14px; border-radius: 16px; margin-bottom: 16px; border: 1px dashed var(--border-color); }
         .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
         .modal-buttons button { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; }
@@ -248,12 +250,11 @@
 
 <div class="phone-container">
     
-    <!-- MÀN HÌNH 1: TRANG CHỦ TO-DO LIST HÀNG NGÀY -->
+    <!-- MÀN HÌNH 1 -->
     <div id="main-screen" class="screen">
         <div class="header-main">
             <div class="header-left-group">
                 <button class="btn-action-circle btn-theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙</button>
-                <!-- NÚT BẬT TẮT XIN QUYỀN THÔNG BÁO NHẮC NHỞ -->
                 <button class="btn-action-circle btn-noti-status" onclick="requestNotificationPermission()" id="noti-btn">🔔</button>
                 <h2 id="main-title">Việc hôm nay</h2>
             </div>
@@ -277,7 +278,7 @@
         </div>
     </div>
 
-    <!-- MÀN HÌNH 2: CHI TIẾT LỊCH TRÌNH THEO KHUNG GIỜ -->
+    <!-- MÀN HÌNH 2 -->
     <div id="detail-screen" class="screen">
         <button class="btn-back" onclick="goBack()">← Quay lại trang chủ</button>
         <div class="header-main">
@@ -291,14 +292,19 @@
         <div class="time-slots-container" id="slots-list"></div>
     </div>
 
-    <!-- POP-UP 1: BIỂU MẪU NHẬP LIỆU -->
+    <!-- POP-UP 1: BIỂU MẪU NHẬP LIỆU (ĐÃ SỬA CÓ CHỌN PHÚT) -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <h3>Tạo lịch trình mới</h3>
             <label>Tên công việc</label>
             <input type="text" id="event-title" placeholder="Nhập tên việc cần làm...">
-            <label>Khung giờ thực hiện</label>
-            <select id="event-time"></select>
+            
+            <label>Thời gian thực hiện</label>
+            <div class="time-picker-group">
+                <select id="event-hour" title="Chọn Giờ"></select>
+                <select id="event-minute" title="Chọn Phút"></select>
+            </div>
+
             <label>Mức độ ưu tiên</label>
             <select id="event-level">
                 <option value="cao">🔥 Quan trọng / Cao</option>
@@ -348,14 +354,14 @@
     const mangTenThu = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
     let currentSelectedThu = homNay; 
     let isAddingFromMainScreen = true; 
-    let lastNotifiedHour = ""; // Biến chặn không cho bắn thông báo lặp đi lặp lại trong cùng một tiếng
+    let lastNotifiedTime = ""; 
 
     // LOCALSTORAGE DATA LOGIC
     let localData = localStorage.getItem("DATA_EVENTS");
     let dataEvents = localData ? JSON.parse(localData) : [
         { id: 1, thu: 1, giodau: "07:00", title: "Khóa học PREP", taskType: "fixed", repeat: "hangTuan", weeks: 12, completed: false, mucDo: "cao" },
-        { id: 2, thu: 5, giodau: "08:00", title: "Học từ vựng tiếng Anh", taskType: "fixed", repeat: "hangTuan", weeks: 4, completed: false, mucDo: "trungBinh" },
-        { id: 3, thu: 5, giodau: "21:00", title: "Đọc sách ôn tập", taskType: "daily", repeat: "", weeks: 0, completed: false, mucDo: "thap" }
+        { id: 2, thu: 5, giodau: "08:30", title: "Học từ vựng tiếng Anh", taskType: "fixed", repeat: "hangTuan", weeks: 4, completed: false, mucDo: "trungBinh" },
+        { id: 3, thu: 5, giodau: "21:15", title: "Đọc sách ôn tập", taskType: "daily", repeat: "", weeks: 0, completed: false, mucDo: "thap" }
     ];
 
     function capNhatBoNho() {
@@ -379,38 +385,28 @@
     }
     document.getElementById("theme-btn").innerText = currentTheme === "dark" ? "☀️" : "🌙";
 
-    // LOGIC THÔNG BÁO NHẮC NHỞ (NOTIFICATION)
+    // NOTIFICATION
     function updateNotiButtonUI() {
         const btn = document.getElementById("noti-btn");
-        if (!("Notification" in window)) {
-            btn.style.display = "none"; // Trình duyệt không hỗ trợ thì ẩn đi
-            return;
-        }
+        if (!("Notification" in window)) { btn.style.display = "none"; return; }
         if (Notification.permission === "granted") {
-            btn.classList.add("active");
-            btn.innerText = "🟢"; // Đã bật thông báo xanh mượt
+            btn.classList.add("active"); btn.innerText = "🟢";
         } else {
-            btn.classList.remove("active");
-            btn.innerText = "🔔"; // Chưa bật hoặc bị chặn
+            btn.classList.remove("active"); btn.innerText = "🔔";
         }
     }
 
     function requestNotificationPermission() {
-        if (!("Notification" in window)) {
-            alert("Trình duyệt này không hỗ trợ tính năng thông báo bồ ơi!");
-            return;
-        }
+        if (!("Notification" in window)) { alert("Trình duyệt không hỗ trợ thông báo!"); return; }
         Notification.requestPermission().then(permission => {
             updateNotiButtonUI();
             if (permission === "granted") {
-                new Notification("Smart To-Do", { body: "🚀 Đã kích hoạt hệ thống nhắc nhở thành công!", silent: false });
-            } else {
-                alert("Bồ vừa từ chối cấp quyền thông báo rồi, nhớ vào cài đặt trình duyệt mở lại nhé!");
+                new Notification("Smart To-Do", { body: "🚀 Hệ thống nhắc nhở thời gian lẻ đã sẵn sàng!", silent: false });
             }
         });
     }
 
-    // Hàm tự động check thời gian chạy ngầm mỗi phút một lần
+    // Tự động check thông báo theo cả GIỜ lẫn PHÚT cụ thể
     function checkTimeAndNotify() {
         if (Notification.permission !== "granted") return;
 
@@ -419,53 +415,45 @@
         const gio = bayGio.getHours();
         const phut = bayGio.getMinutes();
 
-        // Định dạng chuỗi giờ giống database "HH:00"
-        const chuoiGioHienTai = `${gio < 10 ? '0' + gio : gio}:00`;
+        const chuoiThoiGianHienTai = `${gio < 10 ? '0' + gio : gio}:${phut < 10 ? '0' + phut : phut}`;
 
-        // Chỉ kiểm tra và bắn thông báo đúng vào phút đầu tiên của khung giờ đó (ví dụ 07:00)
-        if (phut === 0 && lastNotifiedHour !== chuoiGioHienTai) {
-            const viecSapToi = dataEvents.find(e => e.thu === thuHienTai && e.giodau === chuoiGioHienTai && !e.completed);
+        if (lastNotifiedTime !== chuoiThoiGianHienTai) {
+            const viecSapToi = dataEvents.find(e => e.thu === thuHienTai && e.giodau === chuoiThoiGianHienTai && !e.completed);
             
             if (viecSapToi) {
-                lastNotifiedHour = chuoiGioHienTai; // Lưu lại để không bắn lặp trong phút đó
-                
-                // Kích hoạt rung máy nếu điện thoại hỗ trợ
+                lastNotifiedTime = chuoiThoiGianHienTai; 
                 if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
-                // Bắn thông báo đẩy ra màn hình khóa
                 let iconMucDo = viecSapToi.mucDo === "cao" ? "🔥" : (viecSapToi.mucDo === "trungBinh" ? "⚡" : "🌱");
-                new Notification(`Đến giờ rồi bồ ơi! (${chuoiGioHienTai})`, {
-                    body: `${iconMucDo} Việc cần làm: ${viecSapToi.title}`,
-                    requireInteraction: true // Giữ thông báo trên màn hình cho tới khi user tương tác
+                new Notification(`Đến giờ rồi bồ ơi! (${chuoiThoiGianHienTai})`, {
+                    body: `${iconMucDo} Việc: ${viecSapToi.title}`,
+                    requireInteraction: true
                 });
             }
         }
-        
-        // Reset biến chặn khi chuyển sang phút khác
-        if (phut !== 0) {
-            lastNotifiedHour = "";
-        }
     }
-
-    // Thiết lập vòng lặp quét thời gian liên tục mỗi 30 giây một lần cho chuẩn xác
-    setInterval(checkTimeAndNotify, 30000);
-    // Chạy kiểm tra giao diện nút thông báo ngay khi tải trang
+    setInterval(checkTimeAndNotify, 15000); // Tăng tần suất quét lên 15s/lần tránh hụt phút lẻ
     updateNotiButtonUI();
 
 
-    // KHỞI TẠO TIMER VÀ RENDER GIAO DIỆN
-    const khungGioList = [];
-    for(let i=7; i<=23; i++) { khungGioList.push(`${i < 10 ? '0'+i : i}:00`); }
-    const selectTime = document.getElementById('event-time');
-    khungGioList.forEach(gio => { selectTime.innerHTML += `<option value="${gio}">${gio}</option>`; });
+    // ĐỔ DỮ LIỆU VÀO Ô CHỌN GIỜ & PHÚT LẺ
+    const selectHour = document.getElementById('event-hour');
+    for(let i=7; i<=23; i++) {
+        let h = i < 10 ? '0'+i : i;
+        selectHour.innerHTML += `<option value="${h}">${h} Giờ</option>`;
+    }
+    const selectMinute = document.getElementById('event-minute');
+    for(let i=0; i<60; i+=5) {
+        let m = i < 10 ? '0'+i : i;
+        selectMinute.innerHTML += `<option value="${m}">${m} Phút</option>`;
+    }
 
     document.getElementById('main-title').innerText = `Việc ${mangTenThu[homNay]}`;
     renderMainTodoList();
 
     function toggleTaskTypeOptions() {
         const type = document.getElementById('task-type').value;
-        const fixedBox = document.getElementById('fixed-options-box');
-        fixedBox.style.display = (type === 'fixed') ? 'block' : 'none';
+        document.getElementById('fixed-options-box').style.display = (type === 'fixed') ? 'block' : 'none';
         if (type === 'fixed') toggleRepeatWeeksOption();
     }
 
@@ -501,20 +489,23 @@
         const container = document.getElementById('slots-list');
         container.innerHTML = "";
 
-        khungGioList.forEach(gio => {
-            const event = dataEvents.find(e => e.thu === currentSelectedThu && e.giodau === gio && !e.completed);
-            let textHienThi = event ? event.title : "Trống lịch";
-            let hiddenCheckbox = event ? "" : "style='display:none;'";
-            let tagHTML = event ? (event.taskType === "fixed" ? `<span class="badge-tag fixed">Cố định</span>` : `<span class="badge-tag">Hằng ngày</span>`) : "";
-            let classMucDo = event ? `level-${event.mucDo}` : "";
-            let textOpacity = event ? "" : "style='opacity: 0.4; font-weight: 400;'";
+        // Tạo danh sách các công việc thuộc ngày đang chọn, sắp xếp theo thứ tự thời gian tăng dần
+        const danhSachLichTrinh = dataEvents.filter(e => e.thu === currentSelectedThu && !e.completed);
+        danhSachLichTrinh.sort((a,b) => a.giodau.localeCompare(b.giodau));
 
+        if(danhSachLichTrinh.length === 0) {
+            container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding: 40px 0; font-style:italic; font-size:14px;">Chưa cài đặt khung giờ nào cho ngày này cả. Bấm nút (+) để thêm giờ lẻ bồ nhé!</div>`;
+            return;
+        }
+
+        danhSachLichTrinh.forEach(event => {
+            let tagHTML = event.taskType === "fixed" ? `<span class="badge-tag fixed">Cố định</span>` : `<span class="badge-tag">Hằng ngày</span>`;
             container.innerHTML += `
-                <div class="time-row ${classMucDo}">
-                    <div class="time-label">${gio}</div>
-                    <input type="checkbox" ${hiddenCheckbox} onchange="triggerComplete(${event ? event.id : 0}, true)">
-                    <div class="event-text" ${textOpacity} contenteditable="${event ? 'true' : 'false'}" onblur="editDirectGlobal(${event ? event.id : 0}, this.innerText)">
-                        ${textHienThi} ${tagHTML}
+                <div class="time-row level-${event.mucDo} has-event">
+                    <div class="time-label">${event.giodau}</div>
+                    <input type="checkbox" onchange="triggerComplete(${event.id}, true)">
+                    <div class="event-text" contenteditable="true" onblur="editDirectGlobal(${event.id}, this.innerText)">
+                        ${event.title} ${tagHTML}
                     </div>
                 </div>`;
         });
@@ -587,7 +578,10 @@
 
     function saveEvent() {
         const title = document.getElementById('event-title').value.trim();
-        const giodau = document.getElementById('event-time').value;
+        const hour = document.getElementById('event-hour').value;
+        const minute = document.getElementById('event-minute').value;
+        const giodau = `${hour}:${minute}`; // Gộp giờ và phút thành chuỗi định dạng HH:MM
+        
         const mucDo = document.getElementById('event-level').value;
         const taskType = document.getElementById('task-type').value;
         const repeat = document.getElementById('repeat-type').value;
@@ -596,6 +590,7 @@
         if(!title) return alert("Bồ ơi nhập tên công việc đã nhé!");
 
         const targetThu = isAddingFromMainScreen ? homNay : currentSelectedThu;
+        // Xóa trùng nếu cùng khung giờ lẻ cũ
         dataEvents = dataEvents.filter(e => !(e.thu === targetThu && e.giodau === giodau));
 
         dataEvents.push({
