@@ -164,6 +164,10 @@
         .btn-add-top { font-size: 24px; color: var(--primary); font-weight: bold; }
         .btn-theme-toggle { font-size: 18px; }
 
+        /* Nút thông báo mới */
+        .btn-noti-status { font-size: 18px; color: #ef4444; }
+        .btn-noti-status.active { color: #10b981; }
+
         /* Danh sách các nhiệm vụ */
         .todo-list-container, .time-slots-container {
             flex: 1;
@@ -248,8 +252,9 @@
     <div id="main-screen" class="screen">
         <div class="header-main">
             <div class="header-left-group">
-                <!-- NÚT GIAO DIỆN SÁNG TỐI MỚI THÊM -->
                 <button class="btn-action-circle btn-theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙</button>
+                <!-- NÚT BẬT TẮT XIN QUYỀN THÔNG BÁO NHẮC NHỞ -->
+                <button class="btn-action-circle btn-noti-status" onclick="requestNotificationPermission()" id="noti-btn">🔔</button>
                 <h2 id="main-title">Việc hôm nay</h2>
             </div>
             <div class="header-actions">
@@ -343,8 +348,9 @@
     const mangTenThu = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
     let currentSelectedThu = homNay; 
     let isAddingFromMainScreen = true; 
+    let lastNotifiedHour = ""; // Biến chặn không cho bắn thông báo lặp đi lặp lại trong cùng một tiếng
 
-    // LOGIC CẤU HÌNH LOCALSTORAGE: Lấy data cũ từ bộ nhớ máy ra, nếu chưa có thì gán mảng mặc định ban đầu
+    // LOCALSTORAGE DATA LOGIC
     let localData = localStorage.getItem("DATA_EVENTS");
     let dataEvents = localData ? JSON.parse(localData) : [
         { id: 1, thu: 1, giodau: "07:00", title: "Khóa học PREP", taskType: "fixed", repeat: "hangTuan", weeks: 12, completed: false, mucDo: "cao" },
@@ -352,12 +358,11 @@
         { id: 3, thu: 5, giodau: "21:00", title: "Đọc sách ôn tập", taskType: "daily", repeat: "", weeks: 0, completed: false, mucDo: "thap" }
     ];
 
-    // Hàm đồng bộ lưu trữ vào bộ nhớ thiết bị
     function capNhatBoNho() {
         localStorage.setItem("DATA_EVENTS", JSON.stringify(dataEvents));
     }
 
-    // LOGIC ĐỔI GIAO DIỆN ĐEN / TRẮNG (LIGHT / DARK MODE)
+    // LIGHT / DARK MODE
     let currentTheme = localStorage.getItem("APP_THEME") || "light";
     document.documentElement.setAttribute("data-theme", currentTheme);
     
@@ -372,10 +377,83 @@
             localStorage.setItem("APP_THEME", "dark");
         }
     }
-    // Đồng bộ trạng thái icon khi mới load trang
     document.getElementById("theme-btn").innerText = currentTheme === "dark" ? "☀️" : "🌙";
 
-    // Khởi tạo khung giờ
+    // LOGIC THÔNG BÁO NHẮC NHỞ (NOTIFICATION)
+    function updateNotiButtonUI() {
+        const btn = document.getElementById("noti-btn");
+        if (!("Notification" in window)) {
+            btn.style.display = "none"; // Trình duyệt không hỗ trợ thì ẩn đi
+            return;
+        }
+        if (Notification.permission === "granted") {
+            btn.classList.add("active");
+            btn.innerText = "🟢"; // Đã bật thông báo xanh mượt
+        } else {
+            btn.classList.remove("active");
+            btn.innerText = "🔔"; // Chưa bật hoặc bị chặn
+        }
+    }
+
+    function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            alert("Trình duyệt này không hỗ trợ tính năng thông báo bồ ơi!");
+            return;
+        }
+        Notification.requestPermission().then(permission => {
+            updateNotiButtonUI();
+            if (permission === "granted") {
+                new Notification("Smart To-Do", { body: "🚀 Đã kích hoạt hệ thống nhắc nhở thành công!", silent: false });
+            } else {
+                alert("Bồ vừa từ chối cấp quyền thông báo rồi, nhớ vào cài đặt trình duyệt mở lại nhé!");
+            }
+        });
+    }
+
+    // Hàm tự động check thời gian chạy ngầm mỗi phút một lần
+    function checkTimeAndNotify() {
+        if (Notification.permission !== "granted") return;
+
+        const bayGio = new Date();
+        const thuHienTai = bayGio.getDay();
+        const gio = bayGio.getHours();
+        const phut = bayGio.getMinutes();
+
+        // Định dạng chuỗi giờ giống database "HH:00"
+        const chuoiGioHienTai = `${gio < 10 ? '0' + gio : gio}:00`;
+
+        // Chỉ kiểm tra và bắn thông báo đúng vào phút đầu tiên của khung giờ đó (ví dụ 07:00)
+        if (phut === 0 && lastNotifiedHour !== chuoiGioHienTai) {
+            const viecSapToi = dataEvents.find(e => e.thu === thuHienTai && e.giodau === chuoiGioHienTai && !e.completed);
+            
+            if (viecSapToi) {
+                lastNotifiedHour = chuoiGioHienTai; // Lưu lại để không bắn lặp trong phút đó
+                
+                // Kích hoạt rung máy nếu điện thoại hỗ trợ
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+                // Bắn thông báo đẩy ra màn hình khóa
+                let iconMucDo = viecSapToi.mucDo === "cao" ? "🔥" : (viecSapToi.mucDo === "trungBinh" ? "⚡" : "🌱");
+                new Notification(`Đến giờ rồi bồ ơi! (${chuoiGioHienTai})`, {
+                    body: `${iconMucDo} Việc cần làm: ${viecSapToi.title}`,
+                    requireInteraction: true // Giữ thông báo trên màn hình cho tới khi user tương tác
+                });
+            }
+        }
+        
+        // Reset biến chặn khi chuyển sang phút khác
+        if (phut !== 0) {
+            lastNotifiedHour = "";
+        }
+    }
+
+    // Thiết lập vòng lặp quét thời gian liên tục mỗi 30 giây một lần cho chuẩn xác
+    setInterval(checkTimeAndNotify, 30000);
+    // Chạy kiểm tra giao diện nút thông báo ngay khi tải trang
+    updateNotiButtonUI();
+
+
+    // KHỞI TẠO TIMER VÀ RENDER GIAO DIỆN
     const khungGioList = [];
     for(let i=7; i<=23; i++) { khungGioList.push(`${i < 10 ? '0'+i : i}:00`); }
     const selectTime = document.getElementById('event-time');
@@ -446,7 +524,7 @@
         let event = dataEvents.find(e => e.id === id);
         if(event) {
             event.completed = status;
-            capNhatBoNho(); // Lưu trạng thái hoàn thành vào LocalStorage
+            capNhatBoNho();
             renderMainTodoList();
             renderTimeSlots();
         }
@@ -478,7 +556,7 @@
         let event = dataEvents.find(e => e.id === id);
         if(event) {
             event.completed = false;
-            capNhatBoNho(); // Lưu trạng thái khôi phục vào LocalStorage
+            capNhatBoNho();
             renderArchiveList();
             renderMainTodoList();
             renderTimeSlots();
@@ -532,7 +610,7 @@
             mucDo: mucDo
         });
 
-        capNhatBoNho(); // Lưu object mới tạo vào LocalStorage luôn
+        capNhatBoNho();
         document.getElementById('event-title').value = "";
         closeModal();
         renderMainTodoList();
@@ -544,7 +622,7 @@
         let event = dataEvents.find(e => e.id === id);
         if(event && cleanText !== "") {
             event.title = cleanText;
-            capNhatBoNho(); // Đồng bộ text mới chỉnh sửa trực tiếp vào bộ nhớ máy
+            capNhatBoNho();
         }
         renderMainTodoList();
         renderTimeSlots();
