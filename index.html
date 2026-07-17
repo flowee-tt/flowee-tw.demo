@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Quản Lý Thời Gian - Bản Hoàn Thiện V6</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 850px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #333; }
+        .section { margin-bottom: 25px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 5px; color: #555; }
+        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        
+        .days-checkbox { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .day-label { display: flex; align-items: center; gap: 4px; background: #eee; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        
+        .priority-select { display: flex; gap: 10px; }
+        .priority-btn { flex: 1; border: 2px solid transparent; opacity: 0.6; }
+        .priority-btn.active { opacity: 1; border-color: #333; }
+        .p-high { background-color: #ff4d4f; color: white; }
+        .p-medium { background-color: #ffc107; color: black; }
+        .p-low { background-color: #52c41a; color: white; }
+        
+        .time-block-item, .task-item { padding: 15px; background: white; margin-top: 8px; border-radius: 6px; border-left: 5px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .task-item { display: flex; flex-direction: column; gap: 10px; }
+        .task-item.high { border-left-color: #ff4d4f; }
+        .task-item.medium { border-left-color: #ffc107; }
+        .task-item.low { border-left-color: #52c41a; }
+        
+        /* Style cho tag khẩn cấp */
+        .urgent-badge { background-color: #ff4d4f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; animation: blink 1.5s infinite; margin-left: 5px; display: inline-block; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.4;} 100% {opacity: 1;} }
+        .deadline-text { font-size: 12px; font-weight: bold; color: #d4380d; margin-top: 2px; }
+        
+        .action-zone { display: flex; flex-direction: column; gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
+        .suggestions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .suggest-chip { background: #e6f7ff; border: 1px solid #91d5ff; color: #1890ff; padding: 6px 12px; border-radius: 15px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .suggest-chip:hover { background: #bae7ff; }
+        
+        .timeline-slot { padding: 12px; background: #fff; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+        .slot-time { width: 100px; font-weight: bold; color: #666; }
+        .slot-content { flex: 1; padding: 4px 8px; border-radius: 4px; }
+        .slot-content.locked { background-color: #ffeef0; color: #c41d7f; font-weight: 500; }
+        .slot-content.occupied { background-color: #e6f7ff; color: #0050b3; font-weight: 500; }
+        
+        .date-selector { background: #e6f7ff; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; border: 1px solid #91d5ff; }
+        .badge { background: #333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px; }
+        .btn-danger { background-color: #ff4d4f; }
+        
+        .input-row { display: flex; gap: 15px; margin-bottom: 12px; flex-wrap: wrap; }
+        .input-col { flex: 1; min-width: 200px; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⏱️ Smart Schedule Core Demo (V6 - Tích Hợp Hạn Chót & Cảnh Báo Khẩn Cấp)</h1>
+    
+    <!-- 1. CÀI ĐẶT KHUNG GIỜ CỨNG -->
+    <div class="section">
+        <h2>1. Cài Đặt Khung Giờ Cứng (Lặp Lại Theo Tuần)</h2>
+        <div class="form-group">
+            <label>Tên hoạt động bận:</label>
+            <input type="text" id="fixed-name" placeholder="Ví dụ: Học trên trường...">
+        </div>
+        <div class="form-group">
+            <label>Áp dụng vào các thứ:</label>
+            <div class="days-checkbox">
+                <label class="day-label"><input type="checkbox" name="fixed-days" value="1"> Thứ 2</label>
+                <label class="day-label"><input type="checkbox" name="fixed-days" value="2"> Thứ 3</label>
+                <label class="day-label"><input type="checkbox" name="fixed-days" value="3"> Thứ 4</label>
+                <label class="day-label"><input type="checkbox" name="fixed-days" value="4"> Thứ 5</label>
+                <label class="day-label"><input type="checkbox" name="fixed-days" value="5"> Thứ 6</label>
+                <label class="day-label"><input type="checkbox" name="fixed-days" value="6"> Thứ 7</label>
+                <label class="day-label"><input type="checkbox" name="fixed-days" value="0"> Chủ Nhật</label>
+            </div>
+        </div>
+        <div class="input-row">
+            <div class="input-col">
+                <label>Từ:</label>
+                <input type="time" id="fixed-start" value="07:00">
+            </div>
+            <div class="input-col">
+                <label>Đến:</label>
+                <input type="time" id="fixed-end" value="11:30">
+            </div>
+        </div>
+        <button onclick="addFixedTime()">🔒 Khóa Khung Giờ Chu Kỳ</button>
+        <div id="fixed-list"></div>
+    </div>
+
+    <!-- BỘ CHỌN NGÀY XEM LỊCH -->
+    <div class="date-selector">
+        <label style="font-size: 16px; margin-right: 10px;">📅 <b>Xem lịch trình ngày:</b></label>
+        <input type="date" id="current-view-date" onchange="onDateChange()">
+        <span id="day-of-week-badge" class="badge"></span>
+        <button onclick="addExceptionDay()" class="btn-danger" style="margin-left: 15px; padding: 5px 10px; font-size: 12px;">🛟 Đặt làm Ngày Ngoại Lệ (Nghỉ)</button>
+        <div id="exception-status" style="margin-top: 5px; font-size: 12px; color: #ff4d4f; font-weight: bold;"></div>
+    </div>
+
+    <!-- 2. RỔ VIỆC HẰNG NGÀY -->
+    <div class="section">
+        <h2>2. Rổ Việc Cần Làm Cho Ngày Này</h2>
+        <div class="form-group">
+            <label>Tên công việc:</label>
+            <input type="text" id="task-name" placeholder="Ví dụ: Nộp bài tập nhóm, Ôn thi...">
+        </div>
+        
+        <div class="input-row">
+            <div class="input-col">
+                <label>⏱️ Thời gian cần làm:</label>
+                <select id="task-duration">
+                    <option value="30">30 Phút</option>
+                    <option value="60">1 Tiếng</option>
+                    <option value="90">1 Tiếng 30 Phút</option>
+                    <option value="120">2 Tiếng</option>
+                </select>
+            </div>
+            
+            <div class="input-col">
+                <label>🕒 Giờ bắt đầu (Tùy chọn):</label>
+                <input type="time" id="task-start-time">
+            </div>
+
+            <!-- THÊM Ô HẠN CHÓT NGÀY -->
+            <div class="input-col">
+                <label>📅 Hạn chót ngày (Tùy chọn):</label>
+                <input type="date" id="task-deadline">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Mức độ quan trọng mặc định:</label>
+            <div class="priority-select" style="margin-top: 5px;">
+                <button class="priority-btn p-high active" onclick="setPriority('high', this)">🔴 Sống còn</button>
+                <button class="priority-btn p-medium" onclick="setPriority('medium', this)">🟡 Dài hạn</button>
+                <button class="priority-btn p-low" onclick="setPriority('low', this)">🟢 Vui vẻ</button>
+            </div>
+        </div>
+        <button onclick="addTask()">➕ Thêm Vào Lịch / Rổ Việc</button>
+        
+        <h3 style="margin-top: 20px; font-size: 16px; color: #444;">📥 Rổ việc chờ xếp lịch</h3>
+        <div id="task-list"></div>
+    </div>
+
+    <!-- 3. DÒNG THỜI GIAN CHI TIẾT -->
+    <div class="section">
+        <h2>3. Dòng Thời Gian Chi Tiết</h2>
+        <div id="daily-timeline"></div>
+    </div>
+</div>
+
+<script>
+    let fixedTimes = [];
+    let exceptions = [];
+    let tasks = [];
+    let currentPriority = 'high';
+
+    const startHour = 6;
+    const endHour = 22;
+
+    window.onload = function() {
+        let today = new Date().toISOString().split('T')[0];
+        document.getElementById('current-view-date').value = today;
+        onDateChange();
+    };
+
+    function onDateChange() {
+        updateDayBadge();
+        renderTimeline();
+        renderTaskList();
+    }
+
+    function updateDayBadge() {
+        const dateInput = document.getElementById('current-view-date').value;
+        if (!dateInput) return;
+        const dateObj = new Date(dateInput);
+        const days = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+        document.getElementById('day-of-week-badge').innerText = days[dateObj.getDay()];
+        document.getElementById('exception-status').innerText = exceptions.includes(dateInput) ? "⚠️ Đây là Ngày Ngoại Lệ: Lịch bận chu kỳ đã bị hủy!" : "";
+    }
+
+    function setPriority(level, btn) {
+        currentPriority = level;
+        document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function addFixedTime() {
+        const name = document.getElementById('fixed-name').value;
+        const start = document.getElementById('fixed-start').value;
+        const end = document.getElementById('fixed-end').value;
+        let checkedDays = [];
+        document.querySelectorAll('input[name="fixed-days"]:checked').forEach(cb => checkedDays.push(parseInt(cb.value)));
+
+        if(!name || checkedDays.length === 0) return alert("Thiếu tên hoặc chưa chọn Thứ!");
+
+        fixedTimes.push({ name, days: checkedDays, start, end });
+        document.getElementById('fixed-name').value = '';
+        renderFixedList();
+        onDateChange();
+    }
+
+    function renderFixedList() {
+        const list = document.getElementById('fixed-list');
+        list.innerHTML = '';
+        const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+        fixedTimes.forEach(item => {
+            let daysStr = item.days.map(d => dayNames[d]).join(', ');
+            list.innerHTML += `<div class="time-block-item">🔒 <b>${item.name}</b> (${item.start} - ${item.end}) [${daysStr}]</div>`;
+        });
+    }
+
+    function addExceptionDay() {
+        const currentDate = document.getElementById('current-view-date').value;
+        if (!exceptions.includes(currentDate)) exceptions.push(currentDate);
+        else exceptions = exceptions.filter(e => e !== currentDate);
+        onDateChange();
+    }
+
+    function addTask() {
+        const name = document.getElementById('task-name').value;
+        const duration = parseInt(document.getElementById('task-duration').value);
+        const startTime = document.getElementById('task-start-time').value;
+        const deadline = document.getElementById('task-deadline').value;
+        const currentDate = document.getElementById('current-view-date').value;
+        
+        if(!name) return alert("Vui lòng nhập tên công việc!");
+
+        let newTask = {
+            id: Date.now(),
+            date: currentDate,
+            name,
+            duration,
+            priority: currentPriority,
+            deadline: deadline || null, // Lưu ngày hạn chót
+            scheduledTime: null
+        };
+
+        if (startTime) {
+            if (isTimeRangeAvailable(currentDate, startTime, duration)) {
+                newTask.scheduledTime = startTime;
+                tasks.push(newTask);
+                alert(`🎯 Đã xếp lịch thành công lúc ${startTime}!`);
+            } else {
+                return alert("⚠️ Khung giờ bạn tự chọn đã bị trùng lịch bận rồi!");
+            }
+        } else {
+            tasks.push(newTask);
+        }
+
+        // Reset
+        document.getElementById('task-name').value = '';
+        document.getElementById('task-start-time').value = '';
+        document.getElementById('task-deadline').value = '';
+        renderTaskList();
+        renderTimeline();
+    }
+
+    function isTimeRangeAvailable(targetDate, startTimeStr, durationMinutes) {
+        const dateObj = new Date(targetDate);
+        const dayOfWeek = dateObj.getDay();
+        const isExceptionDay = exceptions.includes(targetDate);
+
+        let [startH, startM] = startTimeStr.split(':').map(Number);
+        let startTotalMinutes = startH * 60 + startM;
+        let endTotalMinutes = startTotalMinutes + durationMinutes;
+
+        if (startTotalMinutes < startHour * 60 || endTotalMinutes > endHour * 60) return false;
+
+        for (let min = startTotalMinutes; min < endTotalMinutes; min++) {
+            let currentH = Math.floor(min / 60);
+            let currentM = min % 60;
+            let checkTimeStr = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
+
+            if (!isExceptionDay) {
+                for (let fixed of fixedTimes) {
+                    if (fixed.days.includes(dayOfWeek) && checkTimeStr >= fixed.start && checkTimeStr < fixed.end) {
+                        return false; 
+                    }
+                }
+            }
+
+            for (let t of tasks) {
+                if (t.date === targetDate && t.scheduledTime) {
+                    let [tH, tM] = t.scheduledTime.split(':').map(Number);
+                    let tStart = tH * 60 + tM;
+                    let tEnd = tStart + t.duration;
+                    if (min >= tStart && min < tEnd) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    function getValidStartSlots(targetDate, durationMinutes) {
+        let validSlots = [];
+        for (let h = startHour; h < endHour; h++) {
+            for (let m of ['00', '30']) {
+                let timeStr = `${String(h).padStart(2, '0')}:${m}`;
+                if (isTimeRangeAvailable(targetDate, timeStr, durationMinutes)) {
+                    validSlots.push(timeStr);
+                }
+            }
+        }
+        return validSlots;
+    }
+
+    function renderTaskList() {
+        const list = document.getElementById('task-list');
+        list.innerHTML = '';
+        const currentDate = document.getElementById('current-view-date').value;
+        const currentViewDateObj = new Date(currentDate);
+        
+        let currentTasks = tasks.filter(t => t.date === currentDate && !t.scheduledTime);
+
+        if (currentTasks.length === 0) {
+            list.innerHTML = '<span style="color:#999;font-style:italic;">Không có việc nào trong rổ chờ.</span>';
+            return;
+        }
+
+        currentTasks.forEach(task => {
+            let availableSlots = getValidStartSlots(currentDate, task.duration);
+            let suggestionsHtml = '';
+            
+            availableSlots.slice(0, 3).forEach(slot => {
+                suggestionsHtml += `<span class="suggest-chip" onclick="scheduleTask(${task.id}, '${slot}')">📍 ${slot}</span>`;
+            });
+
+            // LOGIC TÍNH HẠN CHÓT VÀ XÁC ĐỊNH KHẨN CẤP
+            let deadlineHtml = '';
+            let urgentBadge = '';
+            let calculatedPriority = task.priority;
+
+            if (task.deadline) {
+                let deadlineObj = new Date(task.deadline);
+                // Tính khoảng cách ngày
+                let timeDiff = deadlineObj.getTime() - currentViewDateObj.getTime();
+                let diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+                if (diffDays === 0) {
+                    deadlineHtml = `<div class="deadline-text">🔥 Hạn chót: Hôm nay!</div>`;
+                    urgentBadge = `<span class="urgent-badge">🚨 KHẨN CẤP</span>`;
+                    calculatedPriority = 'high'; // Ép thành mức độ cao nhất
+                } else if (diffDays === 1) {
+                    deadlineHtml = `<div class="deadline-text">⏳ Hạn chót: Ngày mai!</div>`;
+                    urgentBadge = `<span class="urgent-badge">🚨 KHẨN CẤP</span>`;
+                    calculatedPriority = 'high';
+                } else if (diffDays < 0) {
+                    deadlineHtml = `<div class="deadline-text" style="color: #555;">❌ Quá hạn mất ${Math.abs(diffDays)} ngày!</div>`;
+                    urgentBadge = `<span class="urgent-badge" style="background:#555;">QUÁ HẠN</span>`;
+                } else {
+                    deadlineHtml = `<div class="deadline-text" style="color:#0050b3;">📅 Hạn chót: Còn ${diffDays} ngày nữa (Ngày ${task.deadline.split('-').reverse().join('/')})</div>`;
+                }
+            }
+
+            list.innerHTML += `
+                <div class="task-item ${calculatedPriority}">
+                    <div>
+                        <strong>${task.name}</strong> ${urgentBadge} 
+                        <span style="font-size:12px;color:#666;">(⏱️ ${task.duration} phút)</span>
+                        ${deadlineHtml}
+                    </div>
+                    <div class="action-zone">
+                        <div class="suggestions">
+                            <span style="font-size:12px;color:#555;font-weight:600;">Gợi ý giờ trống tốt nhất:</span>
+                            ${suggestionsHtml || '<span style="font-size:12px;color:#999;">Không có lịch trống phù hợp</span>'}
+                        </div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function scheduleTask(taskId, time) {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            task.scheduledTime = time;
+            renderTaskList();
+            renderTimeline();
+        }
+    }
+
+    function renderTimeline() {
+        const timeline = document.getElementById('daily-timeline');
+        timeline.innerHTML = '';
+        const currentDate = document.getElementById('current-view-date').value;
+        const dateObj = new Date(currentDate);
+        const dayOfWeek = dateObj.getDay();
+        const isExceptionDay = exceptions.includes(currentDate);
+
+        for (let h = startHour; h < endHour; h++) {
+            ['00', '30'].forEach(m => {
+                let timeStr = `${String(h).padStart(2, '0')}:${m}`;
+                let [currH, currM] = [h, parseInt(m)];
+                let currTotalMin = currH * 60 + currM;
+
+                let contentHtml = '<span style="color:#ccc;">(Trống)</span>';
+                let customClass = '';
+
+                if (!isExceptionDay) {
+                    fixedTimes.forEach(fixed => {
+                        if (fixed.days.includes(dayOfWeek) && timeStr >= fixed.start && timeStr < fixed.end) {
+                            contentHtml = `🔒 <b>${fixed.name}</b>`;
+                            customClass = 'locked';
+                        }
+                    });
+                }
+
+                tasks.forEach(t => {
+                    if (t.date === currentDate && t.scheduledTime && customClass !== 'locked') {
+                        let [tH, tM] = t.scheduledTime.split(':').map(Number);
+                        let tStart = tH * 60 + tM;
+                        let tEnd = tStart + t.duration;
+
+                        if (currTotalMin >= tStart && currTotalMin < tEnd) {
+                            let emoji = t.priority === 'high' ? '🔴' : t.priority === 'medium' ? '🟡' : '🟢';
+                            contentHtml = `${emoji} <b>${t.name}</b> (Bắt đầu lúc ${t.scheduledTime})`;
+                            customClass = 'occupied';
+                        }
+                    }
+                });
+
+                timeline.innerHTML += `<div class="timeline-slot">
+                    <div class="slot-time">${timeStr}</div>
+                    <div class="slot-content ${customClass}">${contentHtml}</div>
+                </div>`;
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
