@@ -3,438 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Quản Lý Thời Gian - Bản Hoàn Thiện V6</title>
+    <title>Smart To-Do & Schedule Prototype</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 850px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1, h2 { text-align: center; color: #333; }
-        .section { margin-bottom: 25px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
-        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
-        label { font-weight: 600; margin-bottom: 5px; color: #555; }
-        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
+        /* HỆ THỐNG BIẾN MÀU SẮC (MẶC ĐỊNH LÀ LIGHT MODE) */
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #e0e7ff;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #f1f5f9;
+            --phone-bezel: #1e293b;
+            --bg-light-grey: #f8fafc;
+            --bg-grid-color: #f8fafc;
+            
+            /* Mức độ ưu tiên phong cách mềm mại */
+            --muc-cao-bg: #fff5f5;
+            --muc-cao-text: #dc2626;
+            --muc-trungbinh-bg: #fffbeb;  
+            --muc-trungbinh-text: #d97706;
+            --muc-thap-bg: #f0fdf4;      
+            --muc-thap-text: #059669;
+        }
+
+        /* ĐỊNH NGHĨA THAY ĐỔI THEO DARK MODE */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --phone-bezel: #475569;
+            --bg-light-grey: #334155;
+            --bg-grid-color: #111827;
+            --primary-light: #312e81;
+
+            --muc-cao-bg: #451a1a;
+            --muc-cao-text: #fca5a5;
+            --muc-trungbinh-bg: #453015;  
+            --muc-trungbinh-text: #fde68a;
+            --muc-thap-bg: #143a27;      
+            --muc-thap-text: #a7f3d0;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Khung viền Điện thoại */
+        .phone-container {
+            width: 410px;
+            height: 760px;
+            background: var(--card-bg);
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 8px solid var(--phone-bezel); 
+        }
+
+        /* Thanh giả lập camera */
+        .phone-container::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background: var(--phone-bezel);
+            border-radius: 20px;
+            z-index: 20;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 45px 24px 24px 24px; 
+            background: var(--card-bg);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #main-screen { transform: translateX(0); }
+        #detail-screen { transform: translateX(100%); }
+
+        .screen.hidden-left { transform: translateX(-100%) !important; }
+        .screen.show-right { transform: translateX(0) !important; }
+
+        .header-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header-main h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(45deg, var(--primary), #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-left-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Các nút bấm icon tròn */
+        .btn-action-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-light-grey);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .btn-action-circle:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .btn-archive-top { font-size: 18px; }
+        .btn-add-top { font-size: 24px; color: var(--primary); font-weight: bold; }
+        .btn-theme-toggle { font-size: 18px; }
+
+        /* Danh sách các nhiệm vụ */
+        .todo-list-container, .time-slots-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 4px;
+        }
+
+        .todo-list-container::-webkit-scrollbar, .time-slots-container::-webkit-scrollbar { width: 4px; }
+        .todo-list-container::-webkit-scrollbar-thumb, .time-slots-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Item To-do dạng Card nhỏ */
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            border-left: 5px solid #cbd5e1;
+        }
+
+        .todo-item.level-cao { border-left-color: var(--muc-cao-text); background: var(--muc-cao-bg); }
+        .todo-item.level-trungBinh { border-left-color: var(--muc-trungbinh-text); background: var(--muc-trungbinh-bg); }
+        .todo-item.level-thap { border-left-color: var(--muc-thap-text); background: var(--muc-thap-bg); }
+
+        .todo-item input[type="checkbox"] {
+            appearance: none; width: 22px; height: 22px; border: 2px solid #cbd5e1; border-radius: 7px; outline: none; cursor: pointer; margin-right: 14px; display: flex; align-items: center; justify-content: center;
+        }
+        .todo-item input[type="checkbox"]:checked { background-color: var(--primary); border-color: var(--primary); }
+        .todo-item input[type="checkbox"]:checked::before { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
+
+        .event-text { flex: 1; font-size: 15px; font-weight: 500; line-height: 1.4; outline: none; color: var(--text-main); }
+        .event-text strong { font-weight: 700; margin-right: 4px; }
+
+        /* Các Tag nhỏ xinh phân loại */
+        .badge-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-left: 6px; background: var(--bg-light-grey); color: var(--text-muted); }
+        .badge-tag.fixed { background: var(--primary-light); color: var(--primary); }
+
+        /* Khung chọn thứ */
+        .week-section-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0 0 14px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .week-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: var(--bg-grid-color); padding: 12px; border-radius: 20px; }
+        .btn-day { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 0; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-day:hover { background: var(--primary); color: white; border-color: var(--primary); translateY: -2px; }
+
+        /* CHI TIẾT THEO GIỜ (SCREEN 2) */
+        .btn-back { background: none; border: none; color: var(--primary); font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px; font-weight: 600; text-align: left; }
+        .time-row { display: flex; align-items: center; padding: 14px 12px; background: var(--bg-light-grey); border-radius: 14px; margin-bottom: 8px; border: 1px solid var(--border-color); }
         
-        .days-checkbox { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
-        .day-label { display: flex; align-items: center; gap: 4px; background: #eee; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .time-row.level-cao { background-color: var(--muc-cao-bg); border-color: var(--muc-cao-text); color: var(--muc-cao-text); }
+        .time-row.level-trungBinh { background-color: var(--muc-trungbinh-bg); border-color: var(--muc-trungbinh-text); color: var(--muc-trungbinh-text); }
+        .time-row.level-thap { background-color: var(--muc-thap-bg); border-color: var(--muc-thap-text); color: var(--muc-thap-text); }
+        .time-label { width: 60px; font-size: 13px; color: var(--text-muted); font-weight: 700; }
+        .time-row input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; }
+
+        /* MODAL */
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: var(--card-bg); color: var(--text-main); padding: 26px; border-radius: 28px; width: 88%; max-height: 85%; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); }
+        .modal-content h3 { margin-top: 0; margin-bottom: 18px; font-size: 20px; font-weight: 800; }
+        .modal-content label { font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        .priority-select { display: flex; gap: 10px; }
-        .priority-btn { flex: 1; border: 2px solid transparent; opacity: 0.6; }
-        .priority-btn.active { opacity: 1; border-color: #333; }
-        .p-high { background-color: #ff4d4f; color: white; }
-        .p-medium { background-color: #ffc107; color: black; }
-        .p-low { background-color: #52c41a; color: white; }
+        .modal-content input[type="text"], .modal-content input[type="number"], .modal-content select { width: 100%; margin-bottom: 16px; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 14px; background: var(--bg-light-grey); color: var(--text-main); }
+        .setup-group { background: var(--bg-light-grey); padding: 14px; border-radius: 16px; margin-bottom: 16px; border: 1px dashed var(--border-color); }
+        .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+        .modal-buttons button { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; }
         
-        .time-block-item, .task-item { padding: 15px; background: white; margin-top: 8px; border-radius: 6px; border-left: 5px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .task-item { display: flex; flex-direction: column; gap: 10px; }
-        .task-item.high { border-left-color: #ff4d4f; }
-        .task-item.medium { border-left-color: #ffc107; }
-        .task-item.low { border-left-color: #52c41a; }
-        
-        /* Style cho tag khẩn cấp */
-        .urgent-badge { background-color: #ff4d4f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; animation: blink 1.5s infinite; margin-left: 5px; display: inline-block; }
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.4;} 100% {opacity: 1;} }
-        .deadline-text { font-size: 12px; font-weight: bold; color: #d4380d; margin-top: 2px; }
-        
-        .action-zone { display: flex; flex-direction: column; gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
-        .suggestions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .suggest-chip { background: #e6f7ff; border: 1px solid #91d5ff; color: #1890ff; padding: 6px 12px; border-radius: 15px; font-size: 12px; cursor: pointer; font-weight: bold; }
-        .suggest-chip:hover { background: #bae7ff; }
-        
-        .timeline-slot { padding: 12px; background: #fff; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-        .slot-time { width: 100px; font-weight: bold; color: #666; }
-        .slot-content { flex: 1; padding: 4px 8px; border-radius: 4px; }
-        .slot-content.locked { background-color: #ffeef0; color: #c41d7f; font-weight: 500; }
-        .slot-content.occupied { background-color: #e6f7ff; color: #0050b3; font-weight: 500; }
-        
-        .date-selector { background: #e6f7ff; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; border: 1px solid #91d5ff; }
-        .badge { background: #333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px; }
-        .btn-danger { background-color: #ff4d4f; }
-        
-        .input-row { display: flex; gap: 15px; margin-bottom: 12px; flex-wrap: wrap; }
-        .input-col { flex: 1; min-width: 200px; display: flex; flex-direction: column; }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-confirm:hover { background: var(--primary-hover); }
+        .btn-cancel { background: var(--bg-light-grey); color: var(--text-muted); }
+
+        .archive-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .btn-restore { background: var(--primary-light); color: var(--primary); border: none; padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>⏱️ Smart Schedule Core Demo (V6 - Tích Hợp Hạn Chót & Cảnh Báo Khẩn Cấp)</h1>
+<div class="phone-container">
     
-    <!-- 1. CÀI ĐẶT KHUNG GIỜ CỨNG -->
-    <div class="section">
-        <h2>1. Cài Đặt Khung Giờ Cứng (Lặp Lại Theo Tuần)</h2>
-        <div class="form-group">
-            <label>Tên hoạt động bận:</label>
-            <input type="text" id="fixed-name" placeholder="Ví dụ: Học trên trường...">
-        </div>
-        <div class="form-group">
-            <label>Áp dụng vào các thứ:</label>
-            <div class="days-checkbox">
-                <label class="day-label"><input type="checkbox" name="fixed-days" value="1"> Thứ 2</label>
-                <label class="day-label"><input type="checkbox" name="fixed-days" value="2"> Thứ 3</label>
-                <label class="day-label"><input type="checkbox" name="fixed-days" value="3"> Thứ 4</label>
-                <label class="day-label"><input type="checkbox" name="fixed-days" value="4"> Thứ 5</label>
-                <label class="day-label"><input type="checkbox" name="fixed-days" value="5"> Thứ 6</label>
-                <label class="day-label"><input type="checkbox" name="fixed-days" value="6"> Thứ 7</label>
-                <label class="day-label"><input type="checkbox" name="fixed-days" value="0"> Chủ Nhật</label>
+    <!-- MÀN HÌNH 1: TRANG CHỦ TO-DO LIST HÀNG NGÀY -->
+    <div id="main-screen" class="screen">
+        <div class="header-main">
+            <div class="header-left-group">
+                <!-- NÚT GIAO DIỆN SÁNG TỐI MỚI THÊM -->
+                <button class="btn-action-circle btn-theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙</button>
+                <h2 id="main-title">Việc hôm nay</h2>
             </div>
-        </div>
-        <div class="input-row">
-            <div class="input-col">
-                <label>Từ:</label>
-                <input type="time" id="fixed-start" value="07:00">
+            <div class="header-actions">
+                <button class="btn-action-circle btn-archive-top" onclick="openArchiveModal()">📦</button>
+                <button class="btn-action-circle btn-add-top" onclick="showModal(true)">+</button>
             </div>
-            <div class="input-col">
-                <label>Đến:</label>
-                <input type="time" id="fixed-end" value="11:30">
-            </div>
-        </div>
-        <button onclick="addFixedTime()">🔒 Khóa Khung Giờ Chu Kỳ</button>
-        <div id="fixed-list"></div>
-    </div>
-
-    <!-- BỘ CHỌN NGÀY XEM LỊCH -->
-    <div class="date-selector">
-        <label style="font-size: 16px; margin-right: 10px;">📅 <b>Xem lịch trình ngày:</b></label>
-        <input type="date" id="current-view-date" onchange="onDateChange()">
-        <span id="day-of-week-badge" class="badge"></span>
-        <button onclick="addExceptionDay()" class="btn-danger" style="margin-left: 15px; padding: 5px 10px; font-size: 12px;">🛟 Đặt làm Ngày Ngoại Lệ (Nghỉ)</button>
-        <div id="exception-status" style="margin-top: 5px; font-size: 12px; color: #ff4d4f; font-weight: bold;"></div>
-    </div>
-
-    <!-- 2. RỔ VIỆC HẰNG NGÀY -->
-    <div class="section">
-        <h2>2. Rổ Việc Cần Làm Cho Ngày Này</h2>
-        <div class="form-group">
-            <label>Tên công việc:</label>
-            <input type="text" id="task-name" placeholder="Ví dụ: Nộp bài tập nhóm, Ôn thi...">
         </div>
         
-        <div class="input-row">
-            <div class="input-col">
-                <label>⏱️ Thời gian cần làm:</label>
-                <select id="task-duration">
-                    <option value="30">30 Phút</option>
-                    <option value="60">1 Tiếng</option>
-                    <option value="90">1 Tiếng 30 Phút</option>
-                    <option value="120">2 Tiếng</option>
+        <div class="todo-list-container" id="main-todo-list"></div>
+        
+        <h3 class="week-section-title">Lịch trình các thứ</h3>
+        <div class="week-grid">
+            <button class="btn-day" onclick="openDetail('Thứ 2', 1)">T2</button>
+            <button class="btn-day" onclick="openDetail('Thứ 3', 2)">T3</button>
+            <button class="btn-day" onclick="openDetail('Thứ 4', 3)">T4</button>
+            <button class="btn-day" onclick="openDetail('Thứ 5', 4)">T5</button>
+            <button class="btn-day" onclick="openDetail('Thứ 6', 5)">T6</button>
+            <button class="btn-day" onclick="openDetail('Thứ 7', 6)">T7</button>
+            <button class="btn-day" onclick="openDetail('Chủ Nhật', 0)">CN</button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH 2: CHI TIẾT LỊCH TRÌNH THEO KHUNG GIỜ -->
+    <div id="detail-screen" class="screen">
+        <button class="btn-back" onclick="goBack()">← Quay lại trang chủ</button>
+        <div class="header-main">
+            <h2 id="detail-title">Lịch trình chi tiết</h2>
+            <div class="header-actions">
+                <button class="btn-action-circle btn-archive-top" onclick="openArchiveModal()">📦</button>
+                <button class="btn-action-circle btn-add-top" onclick="showModal(false)">+</button>
+            </div>
+        </div>
+        
+        <div class="time-slots-container" id="slots-list"></div>
+    </div>
+
+    <!-- POP-UP 1: BIỂU MẪU NHẬP LIỆU -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3>Tạo lịch trình mới</h3>
+            <label>Tên công việc</label>
+            <input type="text" id="event-title" placeholder="Nhập tên việc cần làm...">
+            <label>Khung giờ thực hiện</label>
+            <select id="event-time"></select>
+            <label>Mức độ ưu tiên</label>
+            <select id="event-level">
+                <option value="cao">🔥 Quan trọng / Cao</option>
+                <option value="trungBinh" selected>⚡ Trung bình</option>
+                <option value="thap">🌱 Thấp</option>
+            </select>
+            <label>Loại công việc</label>
+            <select id="task-type" onchange="toggleTaskTypeOptions()">
+                <option value="daily" selected>🏃 Hằng ngày không cố định</option>
+                <option value="fixed">🔄 Lịch cố định định kỳ</option>
+            </select>
+
+            <div class="setup-group" id="fixed-options-box" style="display: none;">
+                <label>Chế độ lặp lại</label>
+                <select id="repeat-type" onchange="toggleRepeatWeeksOption()">
+                    <option value="hangTuan" selected>Tuần nào cũng lặp</option>
+                    <option value="hangThang">Tháng nào cũng lặp</option>
                 </select>
+                <div id="duration-weeks-box">
+                    <label>Số tuần áp dụng lặp</label>
+                    <input type="number" id="repeat-weeks" value="4" min="1">
+                </div>
             </div>
             
-            <div class="input-col">
-                <label>🕒 Giờ bắt đầu (Tùy chọn):</label>
-                <input type="time" id="task-start-time">
-            </div>
-
-            <!-- THÊM Ô HẠN CHÓT NGÀY -->
-            <div class="input-col">
-                <label>📅 Hạn chót ngày (Tùy chọn):</label>
-                <input type="date" id="task-deadline">
+            <div class="modal-buttons">
+                <button onclick="saveEvent()" class="btn-confirm">Lưu lịch trình</button>
+                <button onclick="closeModal()" class="btn-cancel">Hủy bỏ</button>
             </div>
         </div>
-
-        <div class="form-group">
-            <label>Mức độ quan trọng mặc định:</label>
-            <div class="priority-select" style="margin-top: 5px;">
-                <button class="priority-btn p-high active" onclick="setPriority('high', this)">🔴 Sống còn</button>
-                <button class="priority-btn p-medium" onclick="setPriority('medium', this)">🟡 Dài hạn</button>
-                <button class="priority-btn p-low" onclick="setPriority('low', this)">🟢 Vui vẻ</button>
-            </div>
-        </div>
-        <button onclick="addTask()">➕ Thêm Vào Lịch / Rổ Việc</button>
-        
-        <h3 style="margin-top: 20px; font-size: 16px; color: #444;">📥 Rổ việc chờ xếp lịch</h3>
-        <div id="task-list"></div>
     </div>
 
-    <!-- 3. DÒNG THỜI GIAN CHI TIẾT -->
-    <div class="section">
-        <h2>3. Dòng Thời Gian Chi Tiết</h2>
-        <div id="daily-timeline"></div>
+    <!-- POP-UP 2: KHO LƯU TRỮ -->
+    <div id="archive-modal" class="modal">
+        <div class="modal-content">
+            <h3>📦 Kho lưu trữ</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top:-10px; margin-bottom:20px;">Các việc đã hoàn thành. Khôi phục nếu ấn nhầm bồ nhé!</p>
+            <div id="archive-list" style="max-height: 280px; overflow-y:auto; margin-bottom: 10px;"></div>
+            <div class="modal-buttons">
+                <button onclick="closeArchiveModal()" class="btn-cancel" style="width: 100%;">Đóng kho</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    let fixedTimes = [];
-    let exceptions = [];
-    let tasks = [];
-    let currentPriority = 'high';
+    const homNay = new Date().getDay(); 
+    const mangTenThu = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+    let currentSelectedThu = homNay; 
+    let isAddingFromMainScreen = true; 
 
-    const startHour = 6;
-    const endHour = 22;
+    // LOGIC CẤU HÌNH LOCALSTORAGE: Lấy data cũ từ bộ nhớ máy ra, nếu chưa có thì gán mảng mặc định ban đầu
+    let localData = localStorage.getItem("DATA_EVENTS");
+    let dataEvents = localData ? JSON.parse(localData) : [
+        { id: 1, thu: 1, giodau: "07:00", title: "Khóa học PREP", taskType: "fixed", repeat: "hangTuan", weeks: 12, completed: false, mucDo: "cao" },
+        { id: 2, thu: 5, giodau: "08:00", title: "Học từ vựng tiếng Anh", taskType: "fixed", repeat: "hangTuan", weeks: 4, completed: false, mucDo: "trungBinh" },
+        { id: 3, thu: 5, giodau: "21:00", title: "Đọc sách ôn tập", taskType: "daily", repeat: "", weeks: 0, completed: false, mucDo: "thap" }
+    ];
 
-    window.onload = function() {
-        let today = new Date().toISOString().split('T')[0];
-        document.getElementById('current-view-date').value = today;
-        onDateChange();
-    };
-
-    function onDateChange() {
-        updateDayBadge();
-        renderTimeline();
-        renderTaskList();
+    // Hàm đồng bộ lưu trữ vào bộ nhớ thiết bị
+    function capNhatBoNho() {
+        localStorage.setItem("DATA_EVENTS", JSON.stringify(dataEvents));
     }
 
-    function updateDayBadge() {
-        const dateInput = document.getElementById('current-view-date').value;
-        if (!dateInput) return;
-        const dateObj = new Date(dateInput);
-        const days = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
-        document.getElementById('day-of-week-badge').innerText = days[dateObj.getDay()];
-        document.getElementById('exception-status').innerText = exceptions.includes(dateInput) ? "⚠️ Đây là Ngày Ngoại Lệ: Lịch bận chu kỳ đã bị hủy!" : "";
-    }
-
-    function setPriority(level, btn) {
-        currentPriority = level;
-        document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-
-    function addFixedTime() {
-        const name = document.getElementById('fixed-name').value;
-        const start = document.getElementById('fixed-start').value;
-        const end = document.getElementById('fixed-end').value;
-        let checkedDays = [];
-        document.querySelectorAll('input[name="fixed-days"]:checked').forEach(cb => checkedDays.push(parseInt(cb.value)));
-
-        if(!name || checkedDays.length === 0) return alert("Thiếu tên hoặc chưa chọn Thứ!");
-
-        fixedTimes.push({ name, days: checkedDays, start, end });
-        document.getElementById('fixed-name').value = '';
-        renderFixedList();
-        onDateChange();
-    }
-
-    function renderFixedList() {
-        const list = document.getElementById('fixed-list');
-        list.innerHTML = '';
-        const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-        fixedTimes.forEach(item => {
-            let daysStr = item.days.map(d => dayNames[d]).join(', ');
-            list.innerHTML += `<div class="time-block-item">🔒 <b>${item.name}</b> (${item.start} - ${item.end}) [${daysStr}]</div>`;
-        });
-    }
-
-    function addExceptionDay() {
-        const currentDate = document.getElementById('current-view-date').value;
-        if (!exceptions.includes(currentDate)) exceptions.push(currentDate);
-        else exceptions = exceptions.filter(e => e !== currentDate);
-        onDateChange();
-    }
-
-    function addTask() {
-        const name = document.getElementById('task-name').value;
-        const duration = parseInt(document.getElementById('task-duration').value);
-        const startTime = document.getElementById('task-start-time').value;
-        const deadline = document.getElementById('task-deadline').value;
-        const currentDate = document.getElementById('current-view-date').value;
-        
-        if(!name) return alert("Vui lòng nhập tên công việc!");
-
-        let newTask = {
-            id: Date.now(),
-            date: currentDate,
-            name,
-            duration,
-            priority: currentPriority,
-            deadline: deadline || null, // Lưu ngày hạn chót
-            scheduledTime: null
-        };
-
-        if (startTime) {
-            if (isTimeRangeAvailable(currentDate, startTime, duration)) {
-                newTask.scheduledTime = startTime;
-                tasks.push(newTask);
-                alert(`🎯 Đã xếp lịch thành công lúc ${startTime}!`);
-            } else {
-                return alert("⚠️ Khung giờ bạn tự chọn đã bị trùng lịch bận rồi!");
-            }
+    // LOGIC ĐỔI GIAO DIỆN ĐEN / TRẮNG (LIGHT / DARK MODE)
+    let currentTheme = localStorage.getItem("APP_THEME") || "light";
+    document.documentElement.setAttribute("data-theme", currentTheme);
+    
+    function toggleTheme() {
+        if(document.documentElement.getAttribute("data-theme") === "dark") {
+            document.documentElement.setAttribute("data-theme", "light");
+            document.getElementById("theme-btn").innerText = "🌙";
+            localStorage.setItem("APP_THEME", "light");
         } else {
-            tasks.push(newTask);
+            document.documentElement.setAttribute("data-theme", "dark");
+            document.getElementById("theme-btn").innerText = "☀️";
+            localStorage.setItem("APP_THEME", "dark");
         }
+    }
+    // Đồng bộ trạng thái icon khi mới load trang
+    document.getElementById("theme-btn").innerText = currentTheme === "dark" ? "☀️" : "🌙";
 
-        // Reset
-        document.getElementById('task-name').value = '';
-        document.getElementById('task-start-time').value = '';
-        document.getElementById('task-deadline').value = '';
-        renderTaskList();
-        renderTimeline();
+    // Khởi tạo khung giờ
+    const khungGioList = [];
+    for(let i=7; i<=23; i++) { khungGioList.push(`${i < 10 ? '0'+i : i}:00`); }
+    const selectTime = document.getElementById('event-time');
+    khungGioList.forEach(gio => { selectTime.innerHTML += `<option value="${gio}">${gio}</option>`; });
+
+    document.getElementById('main-title').innerText = `Việc ${mangTenThu[homNay]}`;
+    renderMainTodoList();
+
+    function toggleTaskTypeOptions() {
+        const type = document.getElementById('task-type').value;
+        const fixedBox = document.getElementById('fixed-options-box');
+        fixedBox.style.display = (type === 'fixed') ? 'block' : 'none';
+        if (type === 'fixed') toggleRepeatWeeksOption();
     }
 
-    function isTimeRangeAvailable(targetDate, startTimeStr, durationMinutes) {
-        const dateObj = new Date(targetDate);
-        const dayOfWeek = dateObj.getDay();
-        const isExceptionDay = exceptions.includes(targetDate);
-
-        let [startH, startM] = startTimeStr.split(':').map(Number);
-        let startTotalMinutes = startH * 60 + startM;
-        let endTotalMinutes = startTotalMinutes + durationMinutes;
-
-        if (startTotalMinutes < startHour * 60 || endTotalMinutes > endHour * 60) return false;
-
-        for (let min = startTotalMinutes; min < endTotalMinutes; min++) {
-            let currentH = Math.floor(min / 60);
-            let currentM = min % 60;
-            let checkTimeStr = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
-
-            if (!isExceptionDay) {
-                for (let fixed of fixedTimes) {
-                    if (fixed.days.includes(dayOfWeek) && checkTimeStr >= fixed.start && checkTimeStr < fixed.end) {
-                        return false; 
-                    }
-                }
-            }
-
-            for (let t of tasks) {
-                if (t.date === targetDate && t.scheduledTime) {
-                    let [tH, tM] = t.scheduledTime.split(':').map(Number);
-                    let tStart = tH * 60 + tM;
-                    let tEnd = tStart + t.duration;
-                    if (min >= tStart && min < tEnd) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
+    function toggleRepeatWeeksOption() {
+        const repeatType = document.getElementById('repeat-type').value;
+        document.getElementById('duration-weeks-box').style.display = (repeatType === 'hangTuan') ? 'block' : 'none';
     }
 
-    function getValidStartSlots(targetDate, durationMinutes) {
-        let validSlots = [];
-        for (let h = startHour; h < endHour; h++) {
-            for (let m of ['00', '30']) {
-                let timeStr = `${String(h).padStart(2, '0')}:${m}`;
-                if (isTimeRangeAvailable(targetDate, timeStr, durationMinutes)) {
-                    validSlots.push(timeStr);
-                }
-            }
-        }
-        return validSlots;
-    }
+    function renderMainTodoList() {
+        const container = document.getElementById('main-todo-list');
+        container.innerHTML = "";
+        const viecHomNay = dataEvents.filter(e => e.thu === homNay && !e.completed);
 
-    function renderTaskList() {
-        const list = document.getElementById('task-list');
-        list.innerHTML = '';
-        const currentDate = document.getElementById('current-view-date').value;
-        const currentViewDateObj = new Date(currentDate);
-        
-        let currentTasks = tasks.filter(t => t.date === currentDate && !t.scheduledTime);
-
-        if (currentTasks.length === 0) {
-            list.innerHTML = '<span style="color:#999;font-style:italic;">Không có việc nào trong rổ chờ.</span>';
+        if (viecHomNay.length === 0) {
+            container.innerHTML = `<div style="color: var(--text-muted); font-style: italic; padding: 40px 0; text-align:center; font-size:14px;">✨ Hôm nay trống lịch rồi bồ ơi!</div>`;
             return;
         }
 
-        currentTasks.forEach(task => {
-            let availableSlots = getValidStartSlots(currentDate, task.duration);
-            let suggestionsHtml = '';
-            
-            availableSlots.slice(0, 3).forEach(slot => {
-                suggestionsHtml += `<span class="suggest-chip" onclick="scheduleTask(${task.id}, '${slot}')">📍 ${slot}</span>`;
-            });
-
-            // LOGIC TÍNH HẠN CHÓT VÀ XÁC ĐỊNH KHẨN CẤP
-            let deadlineHtml = '';
-            let urgentBadge = '';
-            let calculatedPriority = task.priority;
-
-            if (task.deadline) {
-                let deadlineObj = new Date(task.deadline);
-                // Tính khoảng cách ngày
-                let timeDiff = deadlineObj.getTime() - currentViewDateObj.getTime();
-                let diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-                if (diffDays === 0) {
-                    deadlineHtml = `<div class="deadline-text">🔥 Hạn chót: Hôm nay!</div>`;
-                    urgentBadge = `<span class="urgent-badge">🚨 KHẨN CẤP</span>`;
-                    calculatedPriority = 'high'; // Ép thành mức độ cao nhất
-                } else if (diffDays === 1) {
-                    deadlineHtml = `<div class="deadline-text">⏳ Hạn chót: Ngày mai!</div>`;
-                    urgentBadge = `<span class="urgent-badge">🚨 KHẨN CẤP</span>`;
-                    calculatedPriority = 'high';
-                } else if (diffDays < 0) {
-                    deadlineHtml = `<div class="deadline-text" style="color: #555;">❌ Quá hạn mất ${Math.abs(diffDays)} ngày!</div>`;
-                    urgentBadge = `<span class="urgent-badge" style="background:#555;">QUÁ HẠN</span>`;
-                } else {
-                    deadlineHtml = `<div class="deadline-text" style="color:#0050b3;">📅 Hạn chót: Còn ${diffDays} ngày nữa (Ngày ${task.deadline.split('-').reverse().join('/')})</div>`;
-                }
-            }
-
-            list.innerHTML += `
-                <div class="task-item ${calculatedPriority}">
-                    <div>
-                        <strong>${task.name}</strong> ${urgentBadge} 
-                        <span style="font-size:12px;color:#666;">(⏱️ ${task.duration} phút)</span>
-                        ${deadlineHtml}
-                    </div>
-                    <div class="action-zone">
-                        <div class="suggestions">
-                            <span style="font-size:12px;color:#555;font-weight:600;">Gợi ý giờ trống tốt nhất:</span>
-                            ${suggestionsHtml || '<span style="font-size:12px;color:#999;">Không có lịch trống phù hợp</span>'}
-                        </div>
+        viecHomNay.sort((a,b) => a.giodau.localeCompare(b.giodau));
+        viecHomNay.forEach(event => {
+            let tagHTML = event.taskType === "fixed" ? (event.repeat === "hangTuan" ? `<span class="badge-tag fixed">Cố định ${event.weeks}T</span>` : `<span class="badge-tag fixed">Cố định tháng</span>`) : `<span class="badge-tag">Hằng ngày</span>`;
+            container.innerHTML += `
+                <div class="todo-item level-${event.mucDo}">
+                    <input type="checkbox" onchange="triggerComplete(${event.id}, true)">
+                    <div class="event-text" contenteditable="true" onblur="editDirectGlobal(${event.id}, this.innerText)">
+                        <strong>${event.giodau}</strong> ${event.title} ${tagHTML}
                     </div>
                 </div>`;
         });
     }
 
-    function scheduleTask(taskId, time) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-            task.scheduledTime = time;
-            renderTaskList();
-            renderTimeline();
+    function renderTimeSlots() {
+        const container = document.getElementById('slots-list');
+        container.innerHTML = "";
+
+        khungGioList.forEach(gio => {
+            const event = dataEvents.find(e => e.thu === currentSelectedThu && e.giodau === gio && !e.completed);
+            let textHienThi = event ? event.title : "Trống lịch";
+            let hiddenCheckbox = event ? "" : "style='display:none;'";
+            let tagHTML = event ? (event.taskType === "fixed" ? `<span class="badge-tag fixed">Cố định</span>` : `<span class="badge-tag">Hằng ngày</span>`) : "";
+            let classMucDo = event ? `level-${event.mucDo}` : "";
+            let textOpacity = event ? "" : "style='opacity: 0.4; font-weight: 400;'";
+
+            container.innerHTML += `
+                <div class="time-row ${classMucDo}">
+                    <div class="time-label">${gio}</div>
+                    <input type="checkbox" ${hiddenCheckbox} onchange="triggerComplete(${event ? event.id : 0}, true)">
+                    <div class="event-text" ${textOpacity} contenteditable="${event ? 'true' : 'false'}" onblur="editDirectGlobal(${event ? event.id : 0}, this.innerText)">
+                        ${textHienThi} ${tagHTML}
+                    </div>
+                </div>`;
+        });
+    }
+
+    function triggerComplete(id, status) {
+        let event = dataEvents.find(e => e.id === id);
+        if(event) {
+            event.completed = status;
+            capNhatBoNho(); // Lưu trạng thái hoàn thành vào LocalStorage
+            renderMainTodoList();
+            renderTimeSlots();
         }
     }
 
-    function renderTimeline() {
-        const timeline = document.getElementById('daily-timeline');
-        timeline.innerHTML = '';
-        const currentDate = document.getElementById('current-view-date').value;
-        const dateObj = new Date(currentDate);
-        const dayOfWeek = dateObj.getDay();
-        const isExceptionDay = exceptions.includes(currentDate);
+    function openArchiveModal() { document.getElementById('archive-modal').style.display = 'flex'; renderArchiveList(); }
+    function closeArchiveModal() { document.getElementById('archive-modal').style.display = 'none'; }
 
-        for (let h = startHour; h < endHour; h++) {
-            ['00', '30'].forEach(m => {
-                let timeStr = `${String(h).padStart(2, '0')}:${m}`;
-                let [currH, currM] = [h, parseInt(m)];
-                let currTotalMin = currH * 60 + currM;
+    function renderArchiveList() {
+        const container = document.getElementById('archive-list');
+        container.innerHTML = "";
+        const viecDaXong = dataEvents.filter(e => e.completed);
 
-                let contentHtml = '<span style="color:#ccc;">(Trống)</span>';
-                let customClass = '';
-
-                if (!isExceptionDay) {
-                    fixedTimes.forEach(fixed => {
-                        if (fixed.days.includes(dayOfWeek) && timeStr >= fixed.start && timeStr < fixed.end) {
-                            contentHtml = `🔒 <b>${fixed.name}</b>`;
-                            customClass = 'locked';
-                        }
-                    });
-                }
-
-                tasks.forEach(t => {
-                    if (t.date === currentDate && t.scheduledTime && customClass !== 'locked') {
-                        let [tH, tM] = t.scheduledTime.split(':').map(Number);
-                        let tStart = tH * 60 + tM;
-                        let tEnd = tStart + t.duration;
-
-                        if (currTotalMin >= tStart && currTotalMin < tEnd) {
-                            let emoji = t.priority === 'high' ? '🔴' : t.priority === 'medium' ? '🟡' : '🟢';
-                            contentHtml = `${emoji} <b>${t.name}</b> (Bắt đầu lúc ${t.scheduledTime})`;
-                            customClass = 'occupied';
-                        }
-                    }
-                });
-
-                timeline.innerHTML += `<div class="timeline-slot">
-                    <div class="slot-time">${timeStr}</div>
-                    <div class="slot-content ${customClass}">${contentHtml}</div>
-                </div>`;
-            });
+        if(viecDaXong.length === 0) {
+            container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding: 30px 0; font-style:italic; font-size:13px;">Chưa có dữ liệu lưu trữ.</div>`;
+            return;
         }
+
+        viecDaXong.forEach(event => {
+            container.innerHTML += `
+                <div class="archive-item">
+                    <div><strong>[${mangTenThu[event.thu]} - ${event.giodau}]</strong> ${event.title}</div>
+                    <button class="btn-restore" onclick="restoreEvent(${event.id})">Khôi phục</button>
+                </div>`;
+        });
+    }
+
+    function restoreEvent(id) {
+        let event = dataEvents.find(e => e.id === id);
+        if(event) {
+            event.completed = false;
+            capNhatBoNho(); // Lưu trạng thái khôi phục vào LocalStorage
+            renderArchiveList();
+            renderMainTodoList();
+            renderTimeSlots();
+        }
+    }
+
+    function openDetail(tenThu, thuIndex) {
+        currentSelectedThu = thuIndex;
+        document.getElementById('detail-title').innerText = `Lịch ${tenThu}`;
+        renderTimeSlots();
+        document.getElementById('main-screen').classList.add('hidden-left');
+        document.getElementById('detail-screen').classList.add('show-right');
+    }
+
+    function goBack() {
+        document.getElementById('main-screen').classList.remove('hidden-left');
+        document.getElementById('detail-screen').classList.remove('show-right');
+        renderMainTodoList();
+    }
+
+    function showModal(fromMain) {
+        isAddingFromMainScreen = fromMain;
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('task-type').value = 'daily';
+        toggleTaskTypeOptions();
+    }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    function saveEvent() {
+        const title = document.getElementById('event-title').value.trim();
+        const giodau = document.getElementById('event-time').value;
+        const mucDo = document.getElementById('event-level').value;
+        const taskType = document.getElementById('task-type').value;
+        const repeat = document.getElementById('repeat-type').value;
+        const weeks = parseInt(document.getElementById('repeat-weeks').value) || 0;
+
+        if(!title) return alert("Bồ ơi nhập tên công việc đã nhé!");
+
+        const targetThu = isAddingFromMainScreen ? homNay : currentSelectedThu;
+        dataEvents = dataEvents.filter(e => !(e.thu === targetThu && e.giodau === giodau));
+
+        dataEvents.push({
+            id: Date.now(),
+            thu: targetThu,
+            giodau: giodau,
+            title: title,
+            taskType: taskType,
+            repeat: taskType === 'fixed' ? repeat : "",
+            weeks: (taskType === 'fixed' && repeat === 'hangTuan') ? weeks : 0,
+            completed: false,
+            mucDo: mucDo
+        });
+
+        capNhatBoNho(); // Lưu object mới tạo vào LocalStorage luôn
+        document.getElementById('event-title').value = "";
+        closeModal();
+        renderMainTodoList();
+        renderTimeSlots();
+    }
+
+    function editDirectGlobal(id, textMoi) {
+        let cleanText = textMoi.replace(/Cố định.*/g, "").replace(/Hằng ngày/g, "").replace(/\d{2}:\d{2}/, "").trim();
+        let event = dataEvents.find(e => e.id === id);
+        if(event && cleanText !== "") {
+            event.title = cleanText;
+            capNhatBoNho(); // Đồng bộ text mới chỉnh sửa trực tiếp vào bộ nhớ máy
+        }
+        renderMainTodoList();
+        renderTimeSlots();
     }
 </script>
-
 </body>
 </html>
