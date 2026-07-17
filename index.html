@@ -292,7 +292,7 @@
         <div class="time-slots-container" id="slots-list"></div>
     </div>
 
-    <!-- POP-UP 1: BIỂU MẪU NHẬP LIỆU (ĐÃ SỬA CÓ CHỌN PHÚT) -->
+    <!-- POP-UP 1: BIỂU MẪU NHẬP LIỆU -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <h3>Tạo lịch trình mới</h3>
@@ -385,10 +385,14 @@
     }
     document.getElementById("theme-btn").innerText = currentTheme === "dark" ? "☀️" : "🌙";
 
-    // NOTIFICATION
+    // NOTIFICATION - ÉP BUỘC HIỆN NÚT (🔇 NẾU KHÔNG HỖ TRỢ TRÊN ĐT)
     function updateNotiButtonUI() {
         const btn = document.getElementById("noti-btn");
-        if (!("Notification" in window)) { btn.style.display = "none"; return; }
+        if (!("Notification" in window)) { 
+            btn.innerText = "🔇"; 
+            btn.title = "Trình duyệt này không hỗ trợ thông báo!";
+            return; 
+        }
         if (Notification.permission === "granted") {
             btn.classList.add("active"); btn.innerText = "🟢";
         } else {
@@ -397,7 +401,10 @@
     }
 
     function requestNotificationPermission() {
-        if (!("Notification" in window)) { alert("Trình duyệt không hỗ trợ thông báo!"); return; }
+        if (!("Notification" in window)) { 
+            alert("Trình duyệt trên điện thoại này chặn tính năng thông báo rồi bồ ơi! Hãy mở bằng Safari/Chrome ngoài màn hình chính nha."); 
+            return; 
+        }
         Notification.requestPermission().then(permission => {
             updateNotiButtonUI();
             if (permission === "granted") {
@@ -406,7 +413,6 @@
         });
     }
 
-    // Tự động check thông báo theo cả GIỜ lẫn PHÚT cụ thể
     function checkTimeAndNotify() {
         if (Notification.permission !== "granted") return;
 
@@ -432,7 +438,7 @@
             }
         }
     }
-    setInterval(checkTimeAndNotify, 15000); // Tăng tần suất quét lên 15s/lần tránh hụt phút lẻ
+    setInterval(checkTimeAndNotify, 15000); 
     updateNotiButtonUI();
 
 
@@ -489,12 +495,11 @@
         const container = document.getElementById('slots-list');
         container.innerHTML = "";
 
-        // Tạo danh sách các công việc thuộc ngày đang chọn, sắp xếp theo thứ tự thời gian tăng dần
         const danhSachLichTrinh = dataEvents.filter(e => e.thu === currentSelectedThu && !e.completed);
         danhSachLichTrinh.sort((a,b) => a.giodau.localeCompare(b.giodau));
 
         if(danhSachLichTrinh.length === 0) {
-            container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding: 40px 0; font-style:italic; font-size:14px;">Chưa cài đặt khung giờ nào cho ngày này cả. Bấm nút (+) để thêm giờ lẻ bồ nhé!</div>`;
+            container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding: 40px 0; font-style:italic; font-size:14px;">Chưa cài đặt khung giờ nào cả. Bấm nút (+) để thêm bồ nhé!</div>`;
             return;
         }
 
@@ -580,7 +585,7 @@
         const title = document.getElementById('event-title').value.trim();
         const hour = document.getElementById('event-hour').value;
         const minute = document.getElementById('event-minute').value;
-        const giodau = `${hour}:${minute}`; // Gộp giờ và phút thành chuỗi định dạng HH:MM
+        const giodau = `${hour}:${minute}`; 
         
         const mucDo = document.getElementById('event-level').value;
         const taskType = document.getElementById('task-type').value;
@@ -590,7 +595,6 @@
         if(!title) return alert("Bồ ơi nhập tên công việc đã nhé!");
 
         const targetThu = isAddingFromMainScreen ? homNay : currentSelectedThu;
-        // Xóa trùng nếu cùng khung giờ lẻ cũ
         dataEvents = dataEvents.filter(e => !(e.thu === targetThu && e.giodau === giodau));
 
         dataEvents.push({
