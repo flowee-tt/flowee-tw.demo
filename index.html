@@ -299,6 +299,18 @@
             <label>Tên công việc</label>
             <input type="text" id="event-title" placeholder="Nhập tên việc cần làm...">
             
+            <!-- Ô CHỌN THỨ TRONG TUẦN (MỚI THÊM VÀO ĐÂY BỒ ƠI) -->
+            <label>Áp dụng cho ngày</label>
+            <select id="event-thu">
+                <option value="1">Thứ 2</option>
+                <option value="2">Thứ 3</option>
+                <option value="3">Thứ 4</option>
+                <option value="4">Thứ 5</option>
+                <option value="5">Thứ 6</option>
+                <option value="6">Thứ 7</option>
+                <option value="0">Chủ Nhật</option>
+            </select>
+
             <label>Thời gian thực hiện</label>
             <div class="time-picker-group">
                 <select id="event-hour" title="Chọn Giờ"></select>
@@ -385,7 +397,7 @@
     }
     document.getElementById("theme-btn").innerText = currentTheme === "dark" ? "☀️" : "🌙";
 
-    // NOTIFICATION - ÉP BUỘC HIỆN NÚT (🔇 NẾU KHÔNG HỖ TRỢ TRÊN ĐT)
+    // NOTIFICATION
     function updateNotiButtonUI() {
         const btn = document.getElementById("noti-btn");
         if (!("Notification" in window)) { 
@@ -442,7 +454,7 @@
     updateNotiButtonUI();
 
 
-    // ĐỔ DỮ LIỆU VÀO Ô CHỌN GIỜ & PHÚT LẺ
+    // ĐỔ DỮ LIỆU VÀO Ô CHỌN GIỜ & PHÚT
     const selectHour = document.getElementById('event-hour');
     for(let i=7; i<=23; i++) {
         let h = i < 10 ? '0'+i : i;
@@ -577,6 +589,10 @@
         isAddingFromMainScreen = fromMain;
         document.getElementById('modal').style.display = 'flex';
         document.getElementById('task-type').value = 'daily';
+        
+        // Cập nhật giá trị mặc định cho ô chọn Thứ dựa theo màn hình bồ đang đứng
+        document.getElementById('event-thu').value = fromMain ? homNay : currentSelectedThu;
+        
         toggleTaskTypeOptions();
     }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
@@ -591,10 +607,12 @@
         const taskType = document.getElementById('task-type').value;
         const repeat = document.getElementById('repeat-type').value;
         const weeks = parseInt(document.getElementById('repeat-weeks').value) || 0;
+        
+        // Lấy giá trị Thứ từ ô select mới thêm
+        const targetThu = parseInt(document.getElementById('event-thu').value);
 
         if(!title) return alert("Bồ ơi nhập tên công việc đã nhé!");
 
-        const targetThu = isAddingFromMainScreen ? homNay : currentSelectedThu;
         dataEvents = dataEvents.filter(e => !(e.thu === targetThu && e.giodau === giodau));
 
         dataEvents.push({
